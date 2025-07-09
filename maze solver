@@ -1,0 +1,81 @@
+import tkinter as tk
+from collections import deque
+
+CELL_SIZE = 40
+ROWS, COLS = 10, 10
+
+# 10x10 Maze Layout
+maze = [
+    ['S', 1, 0, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 0, 1, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 1, 0, 1, 1, 1, 0, 1],
+    [1, 1, 1, 1, 0, 1, 0, 1, 0, 1],
+    [0, 0, 0, 0, 0, 1, 0, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 1, 0, 1],
+    [1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
+    [1, 0, 1, 0, 0, 0, 0, 0, 0, 'E'],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+]
+
+class MazeSolverGUI:
+    def _init_(self, root):
+        self.root = root
+        self.root.title("Maze Solver GUI")
+        self.canvas = tk.Canvas(root, width=COLS * CELL_SIZE, height=ROWS * CELL_SIZE)
+        self.canvas.pack()
+        self.draw_maze()
+        self.solve_button = tk.Button(root, text="Solve Maze", command=self.solve_maze)
+        self.solve_button.pack(pady=10)
+
+    def draw_maze(self):
+        self.rects = []
+        for i in range(ROWS):
+            row_rects = []
+            for j in range(COLS):
+                x1, y1 = j * CELL_SIZE, i * CELL_SIZE
+                x2, y2 = x1 + CELL_SIZE, y1 + CELL_SIZE
+                color = "white"
+                if maze[i][j] == 0:
+                    color = "black"
+                elif maze[i][j] == 'S':
+                    color = "green"
+                elif maze[i][j] == 'E':
+                    color = "red"
+                r = self.canvas.create_rectangle(x1, y1, x2, y2, fill=color, outline="gray")
+                row_rects.append(r)
+            self.rects.append(row_rects)
+
+    def solve_maze(self):
+        start = end = None
+        for i in range(ROWS):
+            for j in range(COLS):
+                if maze[i][j] == 'S':
+                    start = (i, j)
+                elif maze[i][j] == 'E':
+                    end = (i, j)
+
+        if not start or not end:
+            return
+
+        queue = deque()
+        queue.append((start, [start]))
+        visited = set()
+        visited.add(start)
+
+        while queue:
+            (x, y), path = queue.popleft()
+            if (x, y) == end:
+                for px, py in path[1:-1]:  # skip start and end
+                    self.canvas.itemconfig(self.rects[px][py], fill="yellow")
+                return
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < ROWS and 0 <= ny < COLS and maze[nx][ny] != 0 and (nx, ny) not in visited:
+                    visited.add((nx, ny))
+                    queue.append(((nx, ny), path + [(nx, ny)]))
+
+if _name_ == "_main_":
+    root = tk.Tk()
+    app = MazeSolverGUI(root)
+    root.mainloop()
